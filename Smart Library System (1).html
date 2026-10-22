@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Library System</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#1d2433;--muted:#667085;--line:#e3e6ee;--accent:#3b5bdb;--accent-t:#fff;--danger:#d6336c;--ok:#2b8a3e;--warn:#e67700;--book:#fff3e0;--ebook:#e7f0ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141c;--card:#1b1f2b;--text:#e8eaf2;--muted:#9aa3b8;--line:#2c3243;--accent:#748ffc;--accent-t:#10131c;--danger:#ff6b9a;--ok:#69db7c;--warn:#ffa94d;--book:#3a2f1c;--ebook:#22304f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12141c;--card:#1b1f2b;--text:#e8eaf2;--muted:#9aa3b8;--line:#2c3243;--accent:#748ffc;--accent-t:#10131c;--danger:#ff6b9a;--ok:#69db7c;--warn:#ffa94d;--book:#3a2f1c;--ebook:#22304f;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1020px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+h1{font-size:24px;margin:0}.sub{color:var(--muted);margin:2px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:26px;line-height:1.1}.stat span{color:var(--muted);font-size:13px}
+.stat.warn b{color:var(--warn)}.stat.ok b{color:var(--ok)}
+input,select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;min-width:0}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input:disabled{opacity:.45}.grow{flex:1 1 200px}
+button{padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font:inherit;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+button.sm{padding:4px 9px;font-size:13px}button.danger{color:var(--danger)}
+.chip.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.tablebox{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
+th.nosort{cursor:default}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px}
+.tag.Book{background:var(--book)}.tag.EBook{background:var(--ebook)}
+.st{font-weight:600;font-size:13px}.st.Available{color:var(--ok)}.st.Borrowed{color:var(--accent)}.st.Overdue{color:var(--danger)}
+.small{color:var(--muted);font-size:12px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.empty{text-align:center;color:var(--muted);padding:26px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:20}
+#toast.show{opacity:1}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);padding:20px;width:min(380px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 12px}dialog label{display:block;margin-bottom:10px;font-size:13px;color:var(--muted)}
+dialog input{width:100%;margin-top:3px;color:var(--text)}
+.dlgbtn{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>📚 Smart Library System</h1><p class="sub">Catalogue, search, borrow and return books and e-books.</p></div>
+    <button id="theme" title="Toggle theme">🌓</button>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card">
+    <h2>Add Resource</h2>
+    <div class="grid">
+      <select id="type"><option>Book</option><option>EBook</option></select>
+      <input id="id" type="number" placeholder="ID">
+      <input id="title" placeholder="Title">
+      <input id="author" placeholder="Author">
+      <input id="format" placeholder="Format (PDF, EPUB…)" disabled>
+    </div>
+    <div class="row"><button class="primary" id="add">Add Resource</button><button id="clear">Clear Form</button></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:12px">
+      <input id="q" class="grow" type="search" placeholder="Live search by title, author or ID…">
+      <span class="row" id="chips"></span>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr>
+          <th data-k="id">ID</th><th data-k="type">Type</th><th data-k="title">Title</th>
+          <th data-k="author">Author</th><th data-k="format">Format</th><th data-k="status">Status</th><th class="nosort">Actions</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="small" id="count"></p>
+  </div>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="form">
+  <h3 id="dtitle"></h3><div id="dfields"></div>
+  <div class="dlgbtn"><button value="cancel" formnovalidate>Cancel</button><button class="primary" value="ok" id="dok">OK</button></div>
+</form></dialog>
+<div id="toast" role="status"></div>
+
+<script>
+const LOAN_DAYS = 14, DAY = 864e5;
+
+// Interface (duck-typed): searchResource(text), displayDetails()
+// Parent class
+class Resource {
+  #id; #title; #author;                       // Encapsulation
+  borrower = null; due = null;
+  constructor(id, title, author) { this.#id = id; this.#title = title; this.#author = author; }
+  get id() { return this.#id; }
+  get title() { return this.#title; }   set title(v) { this.#title = v; }
+  get author() { return this.#author; } set author(v) { this.#author = v; }
+  get type() { return "Resource"; }
+  get format() { return "-"; }
+  get status() { return !this.borrower ? "Available" : (Date.now() > this.due ? "Overdue" : "Borrowed"); }
+  borrow(name, days = LOAN_DAYS) { this.borrower = name; this.due = Date.now() + days * DAY; }
+  giveBack() { this.borrower = null; this.due = null; }
+  searchResource(t) {
+    t = t.trim().toLowerCase();
+    return !t || String(this.#id) === t || this.#title.toLowerCase().includes(t) || this.#author.toLowerCase().includes(t);
+  }
+  displayDetails() { return `ID: ${this.#id}, Title: ${this.#title}, Author: ${this.#author}`; }
+  toJSON() { return { type: this.type, id: this.#id, title: this.#title, author: this.#author, format: this.format, borrower: this.borrower, due: this.due }; }
+  static from(o) {                            // Factory (polymorphic creation)
+    const r = o.type === "EBook" ? new EBook(o.id, o.title, o.author, o.format) : new Book(o.id, o.title, o.author);
+    r.borrower = o.borrower; r.due = o.due; return r;
+  }
+}
+// Inheritance
+class Book extends Resource {
+  get type() { return "Book"; }
+  displayDetails() { return "Book Details: " + super.displayDetails(); }          // Overriding
+}
+class EBook extends Resource {
+  #format;
+  constructor(id, title, author, format) { super(id, title, author); this.#format = format; }
+  get type() { return "EBook"; }
+  get format() { return this.#format; }  set format(v) { this.#format = v; }
+  displayDetails() { return super.displayDetails() + `, Format: ${this.#format}`; } // Overriding
+}
+// Library with persistence
+class Library {
+  #items = []; #key = "smartlib.v2";
+  constructor() {
+    try { const s = JSON.parse(localStorage.getItem(this.#key)); if (Array.isArray(s)) this.#items = s.map(Resource.from); } catch (e) {}
+    if (!this.#items.length) this.#seed();
+  }
+  #seed() {
+    this.add(new Book(1, "Java Programming", "James Gosling"));
+    this.add(new EBook(2, "Python Basics", "Guido van Rossum", "PDF"));
+    const od = new Book(3, "Clean Code", "Robert C. Martin"); od.borrow("Demo Member", -2); this.add(od);
+  }
+  save() { try { localStorage.setItem(this.#key, JSON.stringify(this.#items)); } catch (e) {} }
+  get all() { return this.#items; }
+  find(id) { return this.#items.find(x => x.id === id); }
+  add(r) { if (this.find(r.id)) return false; this.#items.push(r); this.save(); return true; }
+  remove(id) { const i = this.#items.findIndex(x => x.id === id); if (i < 0) return false; this.#items.splice(i, 1); this.save(); return true; }
+}
+
+const lib = new Library();
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtDate = ms => new Date(ms).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+const state = { q: "", filter: "All", key: "id", dir: 1 };
+
+let tt; function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 2400); }
+
+function ask(title, fields, ok = "OK") {
+  return new Promise(res => {
+    $("dtitle").textContent = title; $("dok").textContent = ok;
+    $("dfields").innerHTML = fields.map(f => `<label>${esc(f.label)}<input name="${f.name}" value="${esc(f.value || "")}" required></label>`).join("");
+    const d = $("dlg"); d.returnValue = "";
+    d.onclose = () => res(d.returnValue === "ok" ? Object.fromEntries(new FormData($("form"))) : null);
+    d.showModal();
+  });
+}
+
+function view() {
+  const f = state.filter;
+  const list = lib.all.filter(r => r.searchResource(state.q) &&
+    (f === "All" || f === r.type || f === r.status));
+  const k = state.key;
+  list.sort((a, b) => {
+    const x = a[k], y = b[k];
+    return (typeof x === "number" ? x - y : String(x).localeCompare(String(y))) * state.dir;
+  });
+  return list;
+}
+
+function render() {
+  const all = lib.all, c = s => all.filter(r => r.status === s).length;
+  $("stats").innerHTML = [
+    ["Total", all.length, ""], ["Available", c("Available"), "ok"], ["Borrowed", c("Borrowed"), ""],
+    ["Overdue", c("Overdue"), c("Overdue") ? "warn" : ""], ["E-Books", all.filter(r => r.type === "EBook").length, ""]
+  ].map(([l, n, cl]) => `<div class="stat ${cl}"><b>${n}</b><span>${l}</span></div>`).join("");
+
+  $("chips").innerHTML = ["All", "Book", "EBook", "Available", "Borrowed", "Overdue"]
+    .map(x => `<button class="sm chip ${state.filter === x ? "on" : ""}" data-f="${x}">${x}</button>`).join("");
+
+  document.querySelectorAll("th[data-k]").forEach(th => {
+    const base = th.textContent.replace(/ [▲▼]$/, "");
+    th.textContent = base + (th.dataset.k === state.key ? (state.dir > 0 ? " ▲" : " ▼") : "");
+  });
+
+  const list = view();
+  $("rows").innerHTML = list.length ? list.map(r => `<tr>
+    <td>${esc(r.id)}</td><td><span class="tag ${esc(r.type)}">${esc(r.type)}</span></td>
+    <td>${esc(r.title)}</td><td>${esc(r.author)}</td><td>${esc(r.format)}</td>
+    <td><span class="st ${r.status}">${r.status}</span>${r.borrower ? `<div class="small">${esc(r.borrower)} · due ${fmtDate(r.due)}</div>` : ""}</td>
+    <td><div class="acts">
+      <button class="sm primary" data-a="${r.borrower ? "return" : "borrow"}" data-id="${r.id}">${r.borrower ? "Return" : "Borrow"}</button>
+      <button class="sm" data-a="edit" data-id="${r.id}">Edit</button>
+      <button class="sm danger" data-a="del" data-id="${r.id}">Remove</button></div></td></tr>`).join("")
+    : '<tr><td colspan="7" class="empty">No resources match.</td></tr>';
+  $("count").textContent = `Showing ${list.length} of ${all.length} resources.`;
+}
+
+$("q").oninput = e => { state.q = e.target.value; render(); };
+$("chips").onclick = e => { const b = e.target.closest("[data-f]"); if (b) { state.filter = b.dataset.f; render(); } };
+document.querySelector("thead").onclick = e => {
+  const th = e.target.closest("th[data-k]"); if (!th) return;
+  state.dir = state.key === th.dataset.k ? -state.dir : 1; state.key = th.dataset.k; render();
+};
+
+$("rows").onclick = async e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return;
+  const r = lib.find(Number(b.dataset.id)); if (!r) return;
+  const a = b.dataset.a;
+  if (a === "borrow") {
+    const v = await ask(`Borrow “${r.title}”`, [{ name: "n", label: "Member name" }], "Borrow");
+    if (v) { r.borrow(v.n.trim() || "Member"); lib.save(); render(); toast(`Borrowed — due in ${LOAN_DAYS} days.`); }
+  } else if (a === "return") {
+    const late = r.status === "Overdue"; r.giveBack(); lib.save(); render(); toast(late ? "Returned (was overdue)." : "Returned successfully.");
+  } else if (a === "edit") {
+    const fields = [{ name: "t", label: "Title", value: r.title }, { name: "a", label: "Author", value: r.author }];
+    if (r.type === "EBook") fields.push({ name: "f", label: "Format", value: r.format });
+    const v = await ask(`Edit resource #${r.id}`, fields, "Save");
+    if (v) { r.title = v.t.trim(); r.author = v.a.trim(); if (r.type === "EBook") r.format = v.f.trim(); lib.save(); render(); toast("Resource updated."); }
+  } else if (a === "del") {
+    const v = await ask(`Remove “${r.title}”?`, [], "Remove");
+    if (v) { lib.remove(r.id); render(); toast("Resource removed."); }
+  }
+};
+
+$("type").onchange = () => { $("format").disabled = $("type").value !== "EBook"; if ($("format").disabled) $("format").value = ""; };
+function clearForm() { ["id", "title", "author", "format"].forEach(i => $(i).value = ""); $("type").value = "Book"; $("format").disabled = true; }
+$("clear").onclick = clearForm;
+$("add").onclick = () => {
+  const raw = $("id").value.trim(), t = $("title").value.trim(), a = $("author").value.trim();
+  const eb = $("type").value === "EBook", fm = $("format").value.trim();
+  if (!raw || !t || !a || (eb && !fm)) return toast("Please fill in all required fields.");
+  if (!/^\d+$/.test(raw)) return toast("ID must be a number.");
+  const id = Number(raw), r = eb ? new EBook(id, t, a, fm) : new Book(id, t, a);
+  if (lib.add(r)) { clearForm(); render(); toast("Resource added successfully!"); }
+  else toast(`A resource with ID ${id} already exists!`);
+};
+
+$("theme").onclick = () => {
+  const el = document.documentElement;
+  const dark = el.dataset.theme ? el.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  el.dataset.theme = dark ? "light" : "dark";
+};
+render();
+</script>
+</body>
+</html>
